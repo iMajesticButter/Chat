@@ -1,0 +1,4 @@
+﻿  Funcs.cpp
+d:\user\documents\visual studio 2017\projects\chatserver\chatserver\funcs.cpp(72): warning C4018: '<': signed/unsigned mismatch
+  ChatServer.vcxproj -> d:\user\documents\visual studio 2017\Projects\ChatServer\Debug\ChatServer.exe
+  ChatServer.vcxproj -> d:\user\documents\visual studio 2017\Projects\ChatServer\Debug\ChatServer.pdb (Partial PDB)
