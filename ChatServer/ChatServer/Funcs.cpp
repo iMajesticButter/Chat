@@ -11,7 +11,7 @@ void ProcessIncomingMSG(SOCKET sock, fd_set& set, SOCKET listening, std::string 
 	int bytesIn = recv(sock, buf, 4096, 0);
 
 	//a simple struct to get data out of the 'ParseAndCommands' function
-	ParsedMSG Parsed;
+	chatcmd::ParsedMSG Parsed;
 
 	if (bytesIn > 0) {
 		//parse the massage and run any commands entered sutch as /join, of /createroom etc...
@@ -49,7 +49,7 @@ void ProcessMaster(SOCKET sock, fd_set& set, SOCKET listening, RoomList& Rooms) 
 	if (bytesIn > 0) {
 		
 		//a simple struct to get data out of the 'ParseAndCommands' function
-		ParsedMSG Parsed;
+		chatcmd::ParsedMSG Parsed;
 
 		//parse the massage and run any commands entered sutch as /join, of /createroom etc...
 		Parsed = ParseAndCommands(sock, listening, set, buf, Rooms, "Master");
@@ -82,144 +82,58 @@ void SendMSG(SOCKET sock, SOCKET listening, std::string str, fd_set set) {
 }
 
 //parse a massage and run any commands entered sutch as /join, of /createroom etc...
-ParsedMSG ParseAndCommands(SOCKET sock, SOCKET listening, fd_set& set, char buf[], RoomList& Rooms, std::string roomName) {
+chatcmd::ParsedMSG ParseAndCommands(SOCKET sock, SOCKET listening, fd_set& set, char buf[], RoomList& Rooms, std::string roomName) {
 
-	//parse
-	std::string s = buf;												//convert buf to string
-	std::string del = "> ";												//the "> " after every username
-	std::string username = s.substr(0, s.find(del));					//remove message and "> " leaving just the username
-	std::string msg = s.substr(s.find(del) + del.length(), s.length());	//remove username and "> " leaving just the message
-	std::string cmdmsg = msg.substr(0, msg.find(" "));					//get the message but cut it off at the first space
+	chatcmd::ParsedMSG toReturn = chatcmd::Parse(buf);
+	
 
-	ParsedMSG toReturn;
-	toReturn.username = username;
-	toReturn.msg = msg;
 	toReturn.command = false;
 	//check for any commands
 	// --- /ping returns 'PONG' to the client it was sent from ---
-	if (msg == "/ping") {
-		std::cout << "Command Called: /ping" << std::endl;
-		char ping[] = "PONG";
-		send(sock, ping, 5, 0);
+	if (chatcmd::Ping(sock, toReturn)) {
 		toReturn.command = true;
 		return toReturn;
 	}
 	// --- /quit tells others in the room that the client is disconnecting and sends a msg to client to confirm ---
-	else if (msg == "/quit") {
-		std::cout << "Command Called: /quit" << std::endl;
-		char ping[] = "PONG";
-		send(sock, ping, 5, 0);
-		std::string broadcast = "SERVER: " + username + " is leaving";
-		std::cout << broadcast << std::endl;
-
-		if (roomName != "Master")
-			SendMSG(sock, listening, broadcast, set);
-
+	else if (chatcmd::Quit(sock, toReturn, set, roomName, &listening)) {
 		toReturn.command = true;
-
 		return toReturn;
 	}
 	// --- /silent does nothing... litarally nothing, it can be usefull, maybe ---
-	else if (cmdmsg == "/silent") {
-		std::cout << "Command Called: /silent" << std::endl;
+	else if (chatcmd::Silent(toReturn)) {
 		toReturn.command = true;
 		return toReturn;
 	}
 	// --- /echo is similar to /ping exept instead of returning 'Pong' it returns whatever the client sends after it ---
 	// example: client sends '/echo hello' server responds 'hello'
-	else if (cmdmsg == "/echo") {
-		std::cout << "Command Called: /echo" << std::endl;
-		if (msg.length() > 6) {
-			std::string str = msg.substr(6, msg.length());
-			std::cout << str << std::endl;
-			send(sock, str.c_str(), 5, 0);
-		}
-
+	else if (chatcmd::Echo(sock, toReturn)) {
 		toReturn.command = true;
-
 		return toReturn;
 	}
 	// --- /changename notifys others in the room that the client is changing their username and what their changing it to ---
-	else if (cmdmsg == "/changename") {
-		std::cout << "Command Called: /changename" << std::endl;
-		std::string str = msg.substr(12, msg.length());
-		std::string toSend = "SERVER: " + username + " has changed there name to " + str;
-		if(roomName != "Master")
-			SendMSG(sock, listening, toSend, set);
-
+	else if (chatcmd::Changename(sock, toReturn, set, roomName, &listening)) {
 		toReturn.command = true;
 		return toReturn;
-
 	}
-	// /list lists all rooms
-	else if (msg == "/list") {
-		std::string message = "SERVER: Chat rooms are:";
-		for (int i = 0; i < Rooms.GetSize(); ++i) {
-			message = message + "\n" + Rooms.Read(i).roomName + "\t" + std::to_string(Rooms.Read(i).roomSet.fd_count);
-		}
-		send(sock, message.c_str(), message.size() + 1, 0);
+	// --- /list lists all rooms ---
+	else if (chatcmd::List(sock, toReturn, &Rooms)) {
 		toReturn.command = true;
 		return toReturn;
 	}
 	// --- /createroom creates a room in a new thread if the entered name is availible, than auto-joins it, and notifys every on in the room that you are in that you are leaving ---
-	else if (cmdmsg == "/createroom") {
-		if (msg.length() > 12) {
-			std::string str = msg.substr(12, msg.length());
-			for (int i = 0; i < Rooms.GetSize(); ++i) {
-				if (str == Rooms.Read(i).roomName || str == "Main") {
-					std::string message = "SERVER: Hey, that name is taken!!!!\nPick a different one please!";
-					send(sock, message.c_str(), message.size() + 1, 0);
-					toReturn.command = true;
-					return toReturn;
-				}
-			}
-			if (roomName != "Master") {
-				std::string toSend = "SERVER: " + username + " is leaving the room to go to another\nroom that is better than this one";
-				SendMSG(sock, listening, toSend, set);
-			}
-			//create the room
-			Rooms.Write(&(Room(str)));
-			Rooms.Read(0).Add(sock, set);
-			//start the thread for the room
-			std::thread T(&Room::Process, std::ref(Rooms.Read(0)), std::ref(Rooms));
-			T.detach();
-			toReturn.command = true;
-			return toReturn;
-		}
-		else {
-			std::string message = "SERVER: Hey!, please enter the room name in your command\nexample: /createroom myroom";
-			send(sock, message.c_str(), message.size() + 1, 0);
-		}
+	else if (chatcmd::Createroom(sock, toReturn, set, &Rooms, roomName, &listening)) {
+		toReturn.command = true;
+		return toReturn;
 	}
 	// --- /join joins the selected room and notifys others in the room that your joining, and notifys others in the room that your leaving ---
-	else if (cmdmsg == "/join") {
-		std::string str = msg.substr(6, msg.length());
-		if (str == roomName) {
-			std::string message = "SERVER: Hey! You're already in that room!";
-			send(sock, message.c_str(), message.size() + 1, 0);
-			toReturn.command = true;
-			return toReturn;
-		}
-		
-		for (int i = 0; i < Rooms.GetSize(); ++i) {
-			if (str == Rooms.Read(i).roomName) {
-				//add client to the room
-				std::string message = "SERVER: Room found... joining";
-				send(sock, message.c_str(), message.size() + 1, 0);
-				Rooms.Read(i).Add(sock, set);
-				if (roomName != "Master") {
-					std::string toSend = "SERVER: " + username + " is leaving the room to go to another\nroom that is better than this one";
-					SendMSG(sock, listening, toSend, set);
-				}
-				std::string toSend = "SERVER: " + username + " is joining the room";
-				SendMSG(sock, listening, toSend, Rooms.Read(i).roomSet);
-				toReturn.command = true;
-				return toReturn;
-			}
-		}
-		//if you make it here you tried to join a room that does not exist
-		std::string message = "SERVER: Hey! that room doesn't exist!!!!!";
-		send(sock, message.c_str(), message.size() + 1, 0);
+	else if (chatcmd::Join(sock, toReturn, set, &Rooms, roomName, &listening)) {
+		toReturn.command = true;
+		return toReturn;
+	}
+	// --- /help sends the contents of a help text file to the client ---
+	else if (chatcmd::Help(sock, toReturn)) {
+		toReturn.command = true;
+		return toReturn;
 	}
 	toReturn.command = false;
 	return toReturn;
@@ -276,11 +190,34 @@ void Master(fd_set& set, SOCKET listening, RoomList& Rooms) {
 				FD_SET(client, &set);
 
 				//send welcome message to new client
+				//welcome message is:
+				/*
+				SERVER: Welcome to the server! please select a chat room
+				Chat rooms are:
+example			room		1
+example			blaRoom		1
+example			ajhahsdfhas	50
+example			myroom		8
+example			datroom		77
+example			jakes r		8
+example			bobroom		9
+example			dabest		9
+				
+
+				use /createroom 'room name' to create a new room
+				use /join 'room name' to join a room
+				use /list to get a list of rooms
+				use /help if you need help... that one is kinda self explanatory
+				*/
 				std::string welcomeMsg = "SERVER: Welcome to the server! please select a chat room\nChat rooms are:";
 				
-				for (i = 0; i < (Rooms).GetSize(); ++i) {
-					welcomeMsg = welcomeMsg + "\n" + Rooms.Read(i).roomName + "\t" + std::to_string(Rooms.Read(i).roomSet.fd_count);
+				for (int l = 0; l < (Rooms).GetSize(); ++l) {
+					if(Rooms.Read(l).roomName.length() < 7)
+						welcomeMsg = welcomeMsg + "\n" + Rooms.Read(l).roomName + "\t\t" + std::to_string(Rooms.Read(l).roomSet.fd_count);
+					else
+						welcomeMsg = welcomeMsg + "\n" + Rooms.Read(l).roomName + "\t" + std::to_string(Rooms.Read(l).roomSet.fd_count);
 				}
+				welcomeMsg += "\n\nuse /createroom 'room name' to create a new room\nuse /join 'room name' to join a room\nuse /list to get a list of rooms\nuse /help if you need help... that one is kinda self explanatory";
 				send(client, welcomeMsg.c_str(), welcomeMsg.size() + 1, 0);
 			}
 			else {

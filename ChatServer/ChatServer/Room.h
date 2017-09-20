@@ -1,9 +1,6 @@
 #pragma once
-#include "main.h"
 #include <list>
-#include <iterator>
 #include <WS2tcpip.h>
-#include <thread>
 #include <io.h>
 #include <mutex>
 

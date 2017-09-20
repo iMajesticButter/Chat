@@ -1,5 +1,7 @@
 #include "Room.h"
+#include "main.h"
 #include "RoomFuncs.h"
+#include <iterator>
 
 //the constructior for the room
 Room::Room(std::string InroomName) {
