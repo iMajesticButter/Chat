@@ -5,7 +5,7 @@
 
 #pragma comment (lib, "ws2_32.lib")
 
-void InputSend(std::string&, SOCKET, bool*);
+void InputSend(SOCKET, bool*);
 
 int main() {
 
@@ -13,15 +13,9 @@ int main() {
 	std::string ipAddress = "127.0.0.1";
 	int port = 54000;
 
-	std::string username = "";
-
 	//get ip to connect to
 	std::cout << "what IP would you like to connect to?" << std::endl;
 	std::cin >> ipAddress;
-
-	//get username from user
-	std::cout << "what is your username??" << std::endl;
-	std::cin >> username;
 
 	//init winsock
 	WSADATA wsData;
@@ -60,7 +54,7 @@ int main() {
 	bool stop = false;
 
 	//Prompt the user for some text in a sepreat thread
-	std::thread prompt(InputSend, username, sock, &stop);
+	std::thread prompt(InputSend, sock, &stop);
 
 	do {
 		//wait 4 responce
@@ -79,7 +73,7 @@ int main() {
 	return 1;
 }
 
-void InputSend(std::string& username, SOCKET sock, bool* stop) {
+void InputSend(SOCKET sock, bool* stop) {
 
 	while (*stop == false){
 		std::string userInput;
@@ -87,15 +81,11 @@ void InputSend(std::string& username, SOCKET sock, bool* stop) {
 
 		std::string cmdmsg = userInput.substr(0, userInput.find(" "));	//get the user input but cut it off at the first space
 
-		std::string toSend = username + "> " + userInput;
+		std::string toSend = userInput;
 
 		if (userInput == "/exit" || userInput == "/quit" || userInput == "/stop" || userInput == "/leave") {
 			*stop = true;
-			toSend = username + "> /quit";
-		}
-		else if (cmdmsg == "/changename") {
-			std::string str = userInput.substr(12, userInput.length());
-			username = str;
+			toSend = "/quit";
 		}
 		if (userInput.size() > 0) {
 			//send da txt

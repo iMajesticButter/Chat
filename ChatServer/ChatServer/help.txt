@@ -16,6 +16,7 @@
 >sbj /changename
 >dsc SYNTAX: /changename 'NEW NAME'
 >dsc changer your name to NEW NAME
+>dsc ','s are not allowed due to the syntax for /msg
 
 >sbj /list
 >dsc list's all available rooms
@@ -31,3 +32,9 @@
 >sbj /help
 >dsc SYNTAX: /help SUBJECT(optional)
 >dsc does this... yeah...
+
+>sbj /msg
+>dsc SYNTAX: /msg USERNAME,MESSAGE
+>dsc sends MESSAGE to USERNAME privately
+
+>end end

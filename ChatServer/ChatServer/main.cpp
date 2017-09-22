@@ -46,8 +46,11 @@ int main() {
 	//create the list of rooms
 	RoomList Rooms;
 
+	//create a list of usernames
+	Namelist Usernames;
+
 	//run the server loop and all the processing that comes with it
-	Master(master, listening, Rooms);
+	Master(master, listening, Rooms, &Usernames);
 
 	//cleanup winsock
 	WSACleanup();

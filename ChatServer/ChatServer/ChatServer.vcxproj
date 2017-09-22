@@ -145,6 +145,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Room.cpp" />
     <ClCompile Include="RoomFuncs.cpp" />
+    <ClCompile Include="Username.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CharRemoval.h" />
@@ -152,6 +153,7 @@
     <ClInclude Include="main.h" />
     <ClInclude Include="Room.h" />
     <ClInclude Include="RoomFuncs.h" />
+    <ClInclude Include="Username.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

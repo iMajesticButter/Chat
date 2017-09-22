@@ -1,4 +1,5 @@
 #pragma once
+#include "Username.h"
 #include <list>
 #include <WS2tcpip.h>
 #include <io.h>
@@ -35,7 +36,7 @@ public:
 	Room(const Room&);
 
 	//the thing that the rooms thread will be running on, where messages get processed, and sockets the line can be accepted into the room
-	void Process(RoomList&);
+	void Process(RoomList&, Namelist& names);
 
 	//add's a socket into line for waiting to connect to the room
 	void Add(SOCKET&, fd_set&);

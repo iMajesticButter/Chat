@@ -1,6 +1,4 @@
-﻿  Funcs.cpp
-d:\user\documents\github\chat\chatserver\chatserver\funcs.cpp(74): warning C4018: '<': signed/unsigned mismatch
-  CharRemoval.cpp
-  Generating Code...
+﻿  Commands.cpp
+d:\user\documents\github\chat\chatserver\chatserver\commands.cpp(267): warning C4018: '>': signed/unsigned mismatch
   ChatServer.vcxproj -> D:\User\Documents\GitHub\Chat\ChatServer\Debug\ChatServer.exe
   ChatServer.vcxproj -> D:\User\Documents\GitHub\Chat\ChatServer\Debug\ChatServer.pdb (Partial PDB)

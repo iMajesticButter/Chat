@@ -2,7 +2,7 @@
 #include "CharRemoval.h"
 
 //process all incoming messages (relay to other clients, parse commands, etc...)
-void ProcessIncomingMSG(SOCKET sock, fd_set& set, SOCKET listening, std::string RoomName, RoomList& Rooms) {
+void ProcessIncomingMSG(SOCKET sock, fd_set& set, SOCKET listening, std::string RoomName, RoomList& Rooms, Namelist* names) {
 
 	//create a buffer to hold receved message
 	char buf[4096];
@@ -16,12 +16,13 @@ void ProcessIncomingMSG(SOCKET sock, fd_set& set, SOCKET listening, std::string 
 
 	if (bytesIn > 0) {
 		//parse the massage and run any commands entered sutch as /join, of /createroom etc...
-		Parsed = ParseAndCommands(sock, listening, set, buf, Rooms, RoomName);
+		Parsed = ParseAndCommands(sock, listening, set, buf, Rooms, RoomName, names);
 	}
 
 	//if the message was empty
 	if (bytesIn <= 0) {
 		//drop the client
+		names->remove(&sock);
 		closesocket(sock);
 		FD_CLR(sock, &set);
 		return;
@@ -29,16 +30,16 @@ void ProcessIncomingMSG(SOCKET sock, fd_set& set, SOCKET listening, std::string 
 	//if the message was not empty and no commands where found in 'ParseAndCommands'
 	else if(!Parsed.command) {
 		//send message to other clients
-		std::string sbuf = buf;
+		std::string sbuf = names->getName(&sock) + "> " + buf;
 		CharRemove::clean(&sbuf, "allowed.txt");
 		SendMSG(sock, listening, sbuf, set);
 	}
 	//write message to console
-	std::cout << buf << std::endl;
+	std::cout << names->getName(&sock) << "> " << buf << std::endl;
 }
 
 //process all clients that are not connected to a room
-void ProcessMaster(SOCKET sock, fd_set& set, SOCKET listening, RoomList& Rooms) {
+void ProcessMaster(SOCKET sock, fd_set& set, SOCKET listening, RoomList& Rooms, Namelist* names) {
 
 	//create a buffer to hold receved message
 	char buf[4096];
@@ -54,17 +55,18 @@ void ProcessMaster(SOCKET sock, fd_set& set, SOCKET listening, RoomList& Rooms) 
 		chatcmd::ParsedMSG Parsed;
 
 		//parse the massage and run any commands entered sutch as /join, of /createroom etc...
-		Parsed = ParseAndCommands(sock, listening, set, buf, Rooms, "Master");
+		Parsed = ParseAndCommands(sock, listening, set, buf, Rooms, "Master", names);
 		
 	}
 	//if the message was empty
 	else {
 		//drop client
+		names->remove(&sock);
 		closesocket(sock);
 		FD_CLR(sock, &set);
 		return;
 	}
-	std::cout << buf << std::endl;
+	std::cout << names->getName(&sock) << "> " << buf << std::endl;
 }
 
 //send message to all but one client and not to the listening socket
@@ -84,11 +86,11 @@ void SendMSG(SOCKET sock, SOCKET listening, std::string str, fd_set set) {
 }
 
 //parse a massage and run any commands entered sutch as /join, of /createroom etc...
-chatcmd::ParsedMSG ParseAndCommands(SOCKET sock, SOCKET listening, fd_set& set, char buf[], RoomList& Rooms, std::string roomName) {
+chatcmd::ParsedMSG ParseAndCommands(SOCKET sock, SOCKET listening, fd_set& set, char buf[], RoomList& Rooms, std::string roomName, Namelist* names) {
 
 	chatcmd::ParsedMSG toReturn = chatcmd::Parse(buf);
-	
-	std::cout << toReturn.username << "> " << toReturn.msg << std::endl;
+
+	toReturn.username = names->getName(&sock);
 
 	toReturn.command = false;
 	//check for any commands
@@ -114,7 +116,7 @@ chatcmd::ParsedMSG ParseAndCommands(SOCKET sock, SOCKET listening, fd_set& set, 
 		return toReturn;
 	}
 	// --- /changename notifys others in the room that the client is changing their username and what their changing it to ---
-	else if (chatcmd::Changename(sock, toReturn, set, roomName, &listening)) {
+	else if (chatcmd::Changename(sock, toReturn, set, roomName, &listening, names)) {
 		toReturn.command = true;
 		return toReturn;
 	}
@@ -124,7 +126,7 @@ chatcmd::ParsedMSG ParseAndCommands(SOCKET sock, SOCKET listening, fd_set& set, 
 		return toReturn;
 	}
 	// --- /createroom creates a room in a new thread if the entered name is availible, than auto-joins it, and notifys every on in the room that you are in that you are leaving ---
-	else if (chatcmd::Createroom(sock, toReturn, set, &Rooms, roomName, &listening)) {
+	else if (chatcmd::Createroom(sock, toReturn, set, &Rooms, roomName, &listening, names)) {
 		toReturn.command = true;
 		return toReturn;
 	}
@@ -138,13 +140,18 @@ chatcmd::ParsedMSG ParseAndCommands(SOCKET sock, SOCKET listening, fd_set& set, 
 		toReturn.command = true;
 		return toReturn;
 	}
+	// --- /msg sends a private message to another client ---
+	else if (chatcmd::Msg(sock, toReturn, names)) {
+		toReturn.command = true;
+		return toReturn;
+	}
 	toReturn.command = false;
 	return toReturn;
 
 }
 
 //process everyone in the master set
-void Master(fd_set& set, SOCKET listening, RoomList& Rooms) {
+void Master(fd_set& set, SOCKET listening, RoomList& Rooms, Namelist* names) {
 	//main server loop
 	while (true) {
 		//copy the set so it won't get messed with by select()
@@ -171,6 +178,13 @@ void Master(fd_set& set, SOCKET listening, RoomList& Rooms) {
 				//add the new connection to list of connected clients
 				FD_SET(client, &set);
 
+				//give the client a default name
+				int i = 0;
+				do {
+					++i;
+				} while (names->contains("user#" + std::to_string(i)));
+				names->add(&client, "user#" + std::to_string(i));
+
 				//send welcome message to new client
 				//welcome message is:
 				/*
@@ -189,6 +203,7 @@ example			dabest		9
 				use /createroom 'room name' to create a new room
 				use /join 'room name' to join a room
 				use /list to get a list of rooms
+				use /changename to give yourself a custom name
 				use /help if you need help... that one is kinda self explanatory
 				*/
 				std::string welcomeMsg = "SERVER: Welcome to the server! please select a chat room\nChat rooms are:";
@@ -199,13 +214,13 @@ example			dabest		9
 					else
 						welcomeMsg = welcomeMsg + "\n" + Rooms.Read(l).roomName + "\t" + std::to_string(Rooms.Read(l).roomSet.fd_count);
 				}
-				welcomeMsg += "\n\nuse /createroom 'room name' to create a new room\nuse /join 'room name' to join a room\nuse /list to get a list of rooms\nuse /help if you need help... that one is kinda self explanatory";
+				welcomeMsg += "\n\nuse /createroom 'room name' to create a new room\nuse /join 'room name' to join a room\nuse /list to get a list of rooms\nuse /changename to give yourself a custom name\nuse /help if you need help... that one is kinda self explanatory";
 				send(client, welcomeMsg.c_str(), welcomeMsg.size() + 1, 0);
 			}
 			else {
 				//if message was not sent on the listening socket, process normally
 				//run 'Master' room
-				ProcessMaster(sock, set, listening, Rooms);
+				ProcessMaster(sock, set, listening, Rooms, names);
 			}
 		}
 	}

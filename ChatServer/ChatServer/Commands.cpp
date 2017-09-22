@@ -1,6 +1,7 @@
 #include "Commands.h"
 #include "main.h"
 #include "CharRemoval.h"
+#include "Username.h"
 
 namespace chatcmd {
 
@@ -10,9 +11,7 @@ namespace chatcmd {
 		//parse
 		std::string s = buf;											//convert buf to string
 		CharRemove::clean(&s, "allowed.txt");							//clean s of any bad char's
-		std::string del = "> ";											//the "> " after every username
-		parsed.username = s.substr(0, s.find(del));						//remove message and "> " leaving just the username
-		parsed.msg = s.substr(s.find(del) + del.length(), s.length());	//remove username and "> " leaving just the message
+		parsed.msg = s;													//set the message
 		parsed.cmdmsg = parsed.msg.substr(0, parsed.msg.find(" "));		//get the message but cut it off at the first space
 		return parsed;
 	}
@@ -69,15 +68,24 @@ namespace chatcmd {
 		return false;
 	}
 
-	// --- /changename notifys others in the room that the client is changing their username and what their changing it to ---
-	bool Changename(SOCKET sock, ParsedMSG parsed, fd_set& set, std::string roomName, SOCKET* listening) {
-		if (parsed.cmdmsg == "/changename") {
+	// --- /changename changes username ---
+	bool Changename(SOCKET sock, ParsedMSG parsed, fd_set& set, std::string roomName, SOCKET* listening, Namelist* names) {
+		if (parsed.cmdmsg == "/changename" && parsed.msg.length() > 12 && parsed.msg.find(",") == std::string::npos) {
 			std::cout << "Command Called: /changename" << std::endl;
 			std::string str = parsed.msg.substr(12, parsed.msg.length());
-			std::string toSend = "SERVER: " + parsed.username + " has changed there name to " + str;
-			if (roomName != "Master")
-				SendMSG(sock, *listening, toSend, set);
-
+			if (!names->contains(str)) {
+				std::string toSend = "SERVER: " + parsed.username + " has changed there name to " + str;
+				names->changeName(&sock, str);
+				if (roomName != "Master")
+					SendMSG(sock, *listening, toSend, set);
+			}
+			else {
+				//name taken
+				std::string msg = "Hey " + names->getName(&sock) + "!  that name is taken!";
+				send(sock, msg.c_str(), msg.length() + 1, 0);
+				msg = names->getName(&sock) + " tried to steal your name...";
+				send(names->getSock(str), msg.c_str(), msg.length(), 0);
+			}
 			return true;
 
 		}
@@ -99,7 +107,7 @@ namespace chatcmd {
 	}
 
 	// --- /createroom creates a room in a new thread if the entered name is availible, than auto-joins it, and notifys every on in the room that you are in that you are leaving ---
-	bool Createroom(SOCKET sock, ParsedMSG parsed, fd_set& set, RoomList* Rooms, std::string roomName, SOCKET* listening) {
+	bool Createroom(SOCKET sock, ParsedMSG parsed, fd_set& set, RoomList* Rooms, std::string roomName, SOCKET* listening, Namelist* names) {
 		if (parsed.cmdmsg == "/createroom") {
 			std::cout << "Command Called: /createroom" << std::endl;
 			if (parsed.msg.length() > 15 && parsed.msg.length() < 22) {
@@ -119,7 +127,7 @@ namespace chatcmd {
 				Rooms->Write(&(Room(str)));
 				Rooms->Read(0).Add(sock, set);
 				//start the thread for the room
-				std::thread T(&Room::Process, std::ref(Rooms->Read(0)), std::ref(*Rooms));
+				std::thread T(&Room::Process, std::ref(Rooms->Read(0)), std::ref(*Rooms), std::ref(*names));
 				T.detach();
 				return true;
 			}
@@ -213,7 +221,7 @@ namespace chatcmd {
 						//read the line
 						std::getline(ifst, line);
 
-							if (line.length() > 5) {
+						if (line.length() > 5) {
 
 							std::string lineType = line.substr(0, 5);
 							line = line.substr(5);
@@ -235,7 +243,7 @@ namespace chatcmd {
 								//send line
 								send(sock, line.c_str(), line.length() + 1, 0);
 							}
-							else if (found && lineType.substr(0, 2) != "//") {
+							else if ((found && lineType.substr(0, 2) != "//") || lineType == ">end ") {
 								return true;
 							}
 						}
@@ -247,6 +255,32 @@ namespace chatcmd {
 			}
 			return true;
 
+		}
+		return false;
+	}
+
+	// --- /msg sends a private message to another client ---
+	bool Msg(SOCKET sock, ParsedMSG parsed, Namelist* names) {
+		if (parsed.cmdmsg == "/msg") {
+			if (parsed.msg.find(",") != std::string::npos) {
+				int comma = parsed.msg.find(",");
+				if (parsed.msg.length() > comma) {
+					std::string destName = parsed.msg.substr(5, comma-5);
+					if (names->contains(destName)) {
+						//other client found
+						std::string msg = parsed.msg.substr(comma+1, parsed.msg.length());
+						std::string toSender = "message: " + msg + " \nsent to: " + destName;
+						send(names->getSock(destName), msg.c_str(), msg.length() + 1, 0);
+						send(sock, toSender.c_str(), toSender.length()+1, 0);
+					}
+					else {
+						//other client not found
+						std::string toSender = "user: " + destName + " not found";
+						send(sock, toSender.c_str(), toSender.length() + 1, 0);
+					}
+				}
+			}
+			return true;
 		}
 		return false;
 	}

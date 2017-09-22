@@ -48,7 +48,7 @@ namespace chatcmd {
 
 	// --- /changename notifys others in the room that the client is changing their username and what their changing it to ---
 	//args: SOCKET, ParsedMSG, fd set, room name(string), SOCKET*(listening socket ptr)
-	bool Changename(SOCKET, ParsedMSG, fd_set&, std::string, SOCKET*);
+	bool Changename(SOCKET, ParsedMSG, fd_set&, std::string, SOCKET*, Namelist*);
 
 	// --- /list lists all rooms ---
 	//args: SOCKET, ParsedMSG, RoomList ptr
@@ -56,7 +56,7 @@ namespace chatcmd {
 
 	// --- /createroom creates a room in a new thread if the entered name is availible, than auto-joins it, and notifys every on in the room that you are in that you are leaving ---
 	//args: SOCKET, ParsedMSG, fd set, RoomList ptr, room name(string), SOCKET*(listening socket ptr)
-	bool Createroom(SOCKET, ParsedMSG, fd_set&, RoomList*, std::string, SOCKET*);
+	bool Createroom(SOCKET, ParsedMSG, fd_set&, RoomList*, std::string, SOCKET*, Namelist*);
 
 	// --- /join joins the selected room and notifys others in the room that your joining, and notifys others in the room that your leaving ---
 	//args: SOCKET, ParsedMSG, fd set, RoomList ptr, room name(string), SOCKET*(listening socket ptr)
@@ -65,4 +65,7 @@ namespace chatcmd {
 	// --- /help sends the contents of a help text file to the client ---
 	//args: SOCKET, ParsedMSG
 	bool Help(SOCKET, ParsedMSG);
+
+	// --- /msg sends a private message to another client ---
+	bool Msg(SOCKET, ParsedMSG, Namelist*);
 }
