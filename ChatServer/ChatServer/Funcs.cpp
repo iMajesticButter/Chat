@@ -1,4 +1,5 @@
 #include "main.h"
+#include "CharRemoval.h"
 
 //process all incoming messages (relay to other clients, parse commands, etc...)
 void ProcessIncomingMSG(SOCKET sock, fd_set& set, SOCKET listening, std::string RoomName, RoomList& Rooms) {
@@ -29,6 +30,7 @@ void ProcessIncomingMSG(SOCKET sock, fd_set& set, SOCKET listening, std::string 
 	else if(!Parsed.command) {
 		//send message to other clients
 		std::string sbuf = buf;
+		CharRemove::clean(&sbuf, "allowed.txt");
 		SendMSG(sock, listening, sbuf, set);
 	}
 	//write message to console
@@ -86,6 +88,7 @@ chatcmd::ParsedMSG ParseAndCommands(SOCKET sock, SOCKET listening, fd_set& set, 
 
 	chatcmd::ParsedMSG toReturn = chatcmd::Parse(buf);
 	
+	std::cout << toReturn.username << "> " << toReturn.msg << std::endl;
 
 	toReturn.command = false;
 	//check for any commands

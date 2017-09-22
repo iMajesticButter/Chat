@@ -5,10 +5,10 @@ namespace CharRemove {
 	//return true if an input char needs to be removed (takes in a string containing all characters that are allowed)
 	bool predicate(char c, std::string allowed) {
 		if (allowed.find_first_of(c) != std::string::npos) {
-			return true;
+			return false;
 		}
 		else {
-			return false;
+			return true;
 		}
 	}
 
@@ -23,10 +23,9 @@ namespace CharRemove {
 		//remove characters from array
 		for (std::string::size_type i = 0; i < str->size(); ++i) {
 			if (predicate((*str)[i], allowed)) {
-				str->at = ' ';
+				str->replace(i, 1, "-");
 			}
 		}
-
 	}
 
 }

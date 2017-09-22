@@ -1,5 +1,6 @@
 #include "Commands.h"
 #include "main.h"
+#include "CharRemoval.h"
 
 namespace chatcmd {
 
@@ -8,6 +9,7 @@ namespace chatcmd {
 		ParsedMSG parsed;
 		//parse
 		std::string s = buf;											//convert buf to string
+		CharRemove::clean(&s, "allowed.txt");							//clean s of any bad char's
 		std::string del = "> ";											//the "> " after every username
 		parsed.username = s.substr(0, s.find(del));						//remove message and "> " leaving just the username
 		parsed.msg = s.substr(s.find(del) + del.length(), s.length());	//remove username and "> " leaving just the message
