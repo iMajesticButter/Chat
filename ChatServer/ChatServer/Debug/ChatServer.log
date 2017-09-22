@@ -1,12 +1,1 @@
-﻿  Commands.cpp
-  Generating Code...
-  Compiling...
-  main.cpp
-  Room.cpp
-  Funcs.cpp
-d:\user\documents\github\chat\chatserver\chatserver\funcs.cpp(72): warning C4018: '<': signed/unsigned mismatch
-  Generating Code...
-  Skipping... (no relevant changes detected)
-  RoomFuncs.cpp
-  ChatServer.vcxproj -> D:\User\Documents\GitHub\Chat\ChatServer\Debug\ChatServer.exe
-  ChatServer.vcxproj -> D:\User\Documents\GitHub\Chat\ChatServer\Debug\ChatServer.pdb (Partial PDB)
+﻿

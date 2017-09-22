@@ -142,27 +142,6 @@ chatcmd::ParsedMSG ParseAndCommands(SOCKET sock, SOCKET listening, fd_set& set, 
 
 //process everyone in the master set
 void Master(fd_set& set, SOCKET listening, RoomList& Rooms) {
-	//get input on whether or not to use rooms
-	bool useRooms = false;
-	std::string ST = "";
-	while (true) {
-		std::cout << "should the server use rooms (better than not useing rooms)" << std::endl;
-		std::cin >> ST;
-		if (ST == "yes" || ST == "y") {
-			//use rooms
-			std::cout << "rooms activated" << std::endl;
-			useRooms = true;
-			break;
-		}
-		else if (ST == "no" || ST == "n") {
-			//don't use rooms
-			std::cout << "running without rooms" << std::endl;
-			break;
-		}
-		else {
-			std::cout << "INVALID RESPONSE TRY AGAIN" << std::endl;
-		}
-	}
 	//main server loop
 	while (true) {
 		//copy the set so it won't get messed with by select()
@@ -222,12 +201,8 @@ example			dabest		9
 			}
 			else {
 				//if message was not sent on the listening socket, process normally
-				if(!useRooms)
-					//just mash everyone into one big single threaded room
-					ProcessIncomingMSG(sock, set, listening, "Main", Rooms);
-				else
-					//run commands to join, create, and list rooms
-					ProcessMaster(sock, set, listening, Rooms);
+				//run 'Master' room
+				ProcessMaster(sock, set, listening, Rooms);
 			}
 		}
 	}

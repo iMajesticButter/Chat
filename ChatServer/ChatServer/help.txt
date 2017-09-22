@@ -1,29 +1,33 @@
-COMMANDS:
-------------------------------------------------------------------------
-	/ping
-		PONG!
-------------------------------------------------------------------------
-	/quit, /leave, /exit
-		quit's the program
-------------------------------------------------------------------------
-	/silent
-		does nothing.  says nothing.  is nothing.  it's silent.
-------------------------------------------------------------------------
-	/echo 'SOMTHING'
-		returns SOMTHING to sender (YOU)
-------------------------------------------------------------------------
-	/changename 'NEW NAME'
-		changer your name to NEW NAME
-------------------------------------------------------------------------
-	/list
-		list's all available rooms
-------------------------------------------------------------------------
-	/createroom 'ROOM NAME'
-		creates a room with the entered name ROOM NAME
-------------------------------------------------------------------------
-	/join 'ROOM NAME'
-		joins the room with the entered name ROOM NAME
-------------------------------------------------------------------------
-	/help
-		does this... yeah...
-------------------------------------------------------------------------
+>lin COMMANDS:
+>sbj /ping
+>dsc PONG!
+
+>sbj /quit
+>dsc quit's the program
+>dsc /leave and /exit also work
+
+>sbj /silent
+>dsc does nothing.  says nothing.  is nothing.  it's silent.
+
+>sbj /echo
+>dsc SYNTAX: /echo 'SOMTHING'
+>dsc returns SOMTHING to sender (YOU)
+
+>sbj /changename
+>dsc SYNTAX: /changename 'NEW NAME'
+>dsc changer your name to NEW NAME
+
+>sbj /list
+>dsc list's all available rooms
+
+>sbj /createroom
+>dsc SYNTAX: /createroom 'ROOM NAME'
+>dsc creates a room with the entered name ROOM NAME
+
+>sbj /join
+>dsc SYNATX: /join 'ROOM NAME'
+>dsc joins the room with the entered name ROOM NAME
+
+>sbj /help
+>dsc SYNTAX: /help SUBJECT(optional)
+>dsc does this... yeah...

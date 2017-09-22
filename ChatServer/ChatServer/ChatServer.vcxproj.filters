@@ -30,6 +30,9 @@
     <ClCompile Include="Commands.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="CharRemoval.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="main.h">
@@ -42,6 +45,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Commands.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CharRemoval.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

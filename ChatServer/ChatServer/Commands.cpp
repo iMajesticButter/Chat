@@ -142,7 +142,7 @@ namespace chatcmd {
 
 	// --- /join joins the selected room and notifys others in the room that your joining, and notifys others in the room that your leaving ---
 	bool Join(SOCKET sock, ParsedMSG parsed, fd_set& set, RoomList* Rooms, std::string roomName, SOCKET* listening) {
-		if (parsed.cmdmsg == "/join") {
+		if (parsed.cmdmsg == "/join" && parsed.msg.length() > 6) {
 			std::cout << "Command Called: /join" << std::endl;
 			std::string str = parsed.msg.substr(6, parsed.msg.length());
 			if (str == roomName) {
@@ -175,24 +175,72 @@ namespace chatcmd {
 
 	// --- /help sends the contents of a help text file to the client ---
 	bool Help(SOCKET sock, ParsedMSG parsed) {
-		if (parsed.msg == "/help") {
+		if (parsed.cmdmsg == "/help") {
 			std::cout << "Command Called: /help" << std::endl;
 			//read help file and send contents to client
 			std::ifstream ifst;
 			ifst.open("help.txt");
 			std::string line;
+			//list subjects and lines
 			if (ifst.is_open()) {
-				while (!ifst.eof()) {
-					//read and send the file line by line
-					std::cout << "READING LINE" << std::endl;
-					//read the line
-					std::getline(ifst, line);
-					//convert the line from "'LINE'" to "SERVER: 'LINE'\n"
-					line = "SERVER: " + line + "\n";
-					std::cout << line;
-					std::cout << "FROM help.txt" << std::endl;
-					//send the line
-					send(sock, line.c_str(), line.length() + 1, 0);
+				if (parsed.msg.length() <= 5) {
+					while (!ifst.eof()) {
+						//read and send the file line by line
+						//std::cout << "READING LINE" << std::endl;
+						//read the line
+						std::getline(ifst, line);
+						std::string lineType = line.substr(0, 5);
+						//don't send the descriptions of the subjects...
+						if (lineType == ">lin " || lineType == ">sbj ") {
+							//convert the line from "'LINE'" to "SERVER: 'LINE'"
+							line = "SERVER: " + line.substr(5);
+							std::cout << line;
+							std::cout << "FROM help.txt" << std::endl;
+							//send line
+							send(sock, line.c_str(), line.length() + 1, 0);
+						}
+					}
+				}
+				//display details about a single subject
+				else {
+					std::string str = parsed.msg.substr(6, parsed.msg.length());
+					bool found = false;
+					while (!ifst.eof()) {
+						//read and send the file line by line
+						//std::cout << "READING LINE" << std::endl;
+						//read the line
+						std::getline(ifst, line);
+
+							if (line.length() > 5) {
+
+							std::string lineType = line.substr(0, 5);
+							line = line.substr(5);
+							//display all description lines after this subject of the subjects...
+							if (lineType == ">sbj " && line.substr(0, line.find(" ")) == str && !found) {
+								found = true;
+								//convert the line from "'LINE'" to "SERVER: --------'LINE'--------"
+								line = "SERVER: --------" + line + "--------";
+								std::cout << line;
+								std::cout << "FROM help.txt" << std::endl;
+								//send line
+								send(sock, line.c_str(), line.length() + 1, 0);
+							}
+							else if (found && lineType == ">dsc ") {
+								//convert the line from "'LINE'" to "SERVER: 'LINE'"
+								line = "SERVER: " + line;
+								std::cout << line;
+								std::cout << "FROM help.txt" << std::endl;
+								//send line
+								send(sock, line.c_str(), line.length() + 1, 0);
+							}
+							else if (found && lineType.substr(0, 2) != "//") {
+								return true;
+							}
+						}
+					}
+					//subject not found
+					std::string message = "SERVER: ERROR: SUBJECT: " + str + " NOT FOUND!";
+					send(sock, message.c_str(), message.length() + 1, 0);
 				}
 			}
 			return true;

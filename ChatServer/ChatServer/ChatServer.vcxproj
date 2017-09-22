@@ -139,6 +139,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="CharRemoval.cpp" />
     <ClCompile Include="Commands.cpp" />
     <ClCompile Include="Funcs.cpp" />
     <ClCompile Include="main.cpp" />
@@ -146,6 +147,7 @@
     <ClCompile Include="RoomFuncs.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CharRemoval.h" />
     <ClInclude Include="Commands.h" />
     <ClInclude Include="main.h" />
     <ClInclude Include="Room.h" />
