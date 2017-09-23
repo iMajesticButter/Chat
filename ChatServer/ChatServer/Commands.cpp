@@ -270,6 +270,7 @@ namespace chatcmd {
 						//other client found
 						std::string msg = parsed.msg.substr(comma+1, parsed.msg.length());
 						std::string toSender = "message: " + msg + " \nsent to: " + destName;
+						msg = names->getName(&sock) + ":> Private> " + msg;
 						send(names->getSock(destName), msg.c_str(), msg.length() + 1, 0);
 						send(sock, toSender.c_str(), toSender.length()+1, 0);
 					}

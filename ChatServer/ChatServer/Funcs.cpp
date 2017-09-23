@@ -30,8 +30,9 @@ void ProcessIncomingMSG(SOCKET sock, fd_set& set, SOCKET listening, std::string 
 	//if the message was not empty and no commands where found in 'ParseAndCommands'
 	else if(!Parsed.command) {
 		//send message to other clients
-		std::string sbuf = names->getName(&sock) + "> " + buf;
+		std::string sbuf = buf;
 		CharRemove::clean(&sbuf, "allowed.txt");
+		sbuf = names->getName(&sock) + "> " + sbuf;
 		SendMSG(sock, listening, sbuf, set);
 	}
 	//write message to console
