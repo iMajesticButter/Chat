@@ -56,7 +56,7 @@ namespace chatcmd {
 
 	// --- /createroom creates a room in a new thread if the entered name is availible, than auto-joins it, and notifys every on in the room that you are in that you are leaving ---
 	//args: SOCKET, ParsedMSG, fd set, RoomList ptr, room name(string), SOCKET*(listening socket ptr)
-	bool Createroom(SOCKET, ParsedMSG, fd_set&, RoomList*, std::string, SOCKET*, Namelist*);
+	bool Createroom(SOCKET, ParsedMSG, fd_set&, RoomList*, std::string, SOCKET*, Namelist*, fd_set&);
 
 	// --- /join joins the selected room and notifys others in the room that your joining, and notifys others in the room that your leaving ---
 	//args: SOCKET, ParsedMSG, fd set, RoomList ptr, room name(string), SOCKET*(listening socket ptr)
@@ -68,4 +68,7 @@ namespace chatcmd {
 
 	// --- /msg sends a private message to another client ---
 	bool Msg(SOCKET, ParsedMSG, Namelist*);
+
+	// --- /leave leaves the current room ---
+	bool Leave(SOCKET, ParsedMSG, fd_set&, fd_set&, std::string, Namelist*);
 }

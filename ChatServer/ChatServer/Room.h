@@ -36,7 +36,7 @@ public:
 	Room(const Room&);
 
 	//the thing that the rooms thread will be running on, where messages get processed, and sockets the line can be accepted into the room
-	void Process(RoomList&, Namelist& names);
+	void Process(RoomList&, Namelist&, fd_set&);
 
 	//add's a socket into line for waiting to connect to the room
 	void Add(SOCKET&, fd_set&);

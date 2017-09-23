@@ -83,9 +83,8 @@ void InputSend(SOCKET sock, bool* stop) {
 
 		std::string toSend = userInput;
 
-		if (userInput == "/exit" || userInput == "/quit" || userInput == "/stop" || userInput == "/leave") {
+		if (userInput == "/quit") {
 			*stop = true;
-			toSend = "/quit";
 		}
 		if (userInput.size() > 0) {
 			//send da txt

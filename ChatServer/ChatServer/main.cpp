@@ -40,7 +40,7 @@ int main() {
 	FD_ZERO(&master);
 
 	//add the listening socket to the master set
-	FD_SET(listening, &master);
+	FD_SET(listening, &master); 
 
 
 	//create the list of rooms

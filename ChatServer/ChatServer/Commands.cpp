@@ -107,7 +107,7 @@ namespace chatcmd {
 	}
 
 	// --- /createroom creates a room in a new thread if the entered name is availible, than auto-joins it, and notifys every on in the room that you are in that you are leaving ---
-	bool Createroom(SOCKET sock, ParsedMSG parsed, fd_set& set, RoomList* Rooms, std::string roomName, SOCKET* listening, Namelist* names) {
+	bool Createroom(SOCKET sock, ParsedMSG parsed, fd_set& set, RoomList* Rooms, std::string roomName, SOCKET* listening, Namelist* names, fd_set& master) {
 		if (parsed.cmdmsg == "/createroom") {
 			std::cout << "Command Called: /createroom" << std::endl;
 			if (parsed.msg.length() > 15 && parsed.msg.length() < 22) {
@@ -127,7 +127,7 @@ namespace chatcmd {
 				Rooms->Write(&(Room(str)));
 				Rooms->Read(0).Add(sock, set);
 				//start the thread for the room
-				std::thread T(&Room::Process, std::ref(Rooms->Read(0)), std::ref(*Rooms), std::ref(*names));
+				std::thread T(&Room::Process, std::ref(Rooms->Read(0)), std::ref(*Rooms), std::ref(*names), std::ref(master));
 				T.detach();
 				return true;
 			}
@@ -285,5 +285,17 @@ namespace chatcmd {
 		}
 		return false;
 	}
-
+	
+	bool Leave(SOCKET sock, ParsedMSG parsed, fd_set& set, fd_set& master, std::string roomName, Namelist* names) {
+		if (parsed.msg == "/leave" && roomName != "Master") {
+			FD_CLR(sock, &set);
+			FD_SET(sock, &master);
+			std::string message = "You have left the room: " + roomName + "!";
+			send(sock, message.c_str(), message.length() + 1, 0);
+			message = names->getName(&sock) + " left you all!";
+			SendMSG(sock, sock, message, set);
+			return true;
+		}
+		return false;
+	}
 }
