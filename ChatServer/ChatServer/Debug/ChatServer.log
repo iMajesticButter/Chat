@@ -1,4 +1,12 @@
-﻿  Funcs.cpp
-d:\user\documents\github\chat\chatserver\chatserver\funcs.cpp(77): warning C4018: '<': signed/unsigned mismatch
-  ChatServer.vcxproj -> D:\User\Documents\GitHub\Chat\ChatServer\Debug\ChatServer.exe
-  ChatServer.vcxproj -> D:\User\Documents\GitHub\Chat\ChatServer\Debug\ChatServer.pdb (Partial PDB)
+﻿  adminCmd.cpp
+  Generating Code...
+  Compiling...
+  main.cpp
+  Room.cpp
+  Funcs.cpp
+c:\users\imajesticbutter\documents\github\chat\chatserver\chatserver\funcs.cpp(85): warning C4018: '<': signed/unsigned mismatch
+  Commands.cpp
+c:\users\imajesticbutter\documents\github\chat\chatserver\chatserver\commands.cpp(267): warning C4018: '>': signed/unsigned mismatch
+  Generating Code...
+  ChatServer.vcxproj -> C:\Users\iMajesticButter\Documents\GitHub\Chat\ChatServer\Debug\ChatServer.exe
+  ChatServer.vcxproj -> C:\Users\iMajesticButter\Documents\GitHub\Chat\ChatServer\Debug\ChatServer.pdb (Partial PDB)

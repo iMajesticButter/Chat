@@ -35,6 +35,9 @@ void Room::Process(RoomList& Rooms, Namelist& names, fd_set& master) {
 			for (it = connectionQ.begin(); it != connectionQ.end(); ++it) {
 				//add the socket to the room
 				FD_SET(*it, &roomSet);
+				if (admin == NULL) {
+					admin = *it;
+				}
 			}
 			//clear the line so we dont end up with clones...
 			connectionQ.clear();
@@ -80,7 +83,7 @@ void Room::Process(RoomList& Rooms, Namelist& names, fd_set& master) {
 				//sock is the socket currently being processed in this iteration of the for loop
 				SOCKET sock = setCopy.fd_array[i];
 				//process incoming message on sock (relay to other clients, parse commands, etc...)
-				ProcessIncomingMSG(sock, roomSet, sock, roomName, Rooms, &names, master);
+				ProcessIncomingMSG(sock, roomSet, sock, roomName, Rooms, &names, master, admin, ops);
 			}
 		}
 		//if select returned a 0 the timeout happened cuz no one said anything for 3 seconds

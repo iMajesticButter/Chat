@@ -28,6 +28,10 @@ public:
 	std::list<SOCKET> connectionQ;
 	//a mutex for locking other threads out of stuff
 	std::mutex _mu;
+	//the admin of the room
+	SOCKET admin = NULL;
+	//a list of ops in the room
+	std::list<SOCKET> ops;
 
 	//the constructior for the room
 	Room(std::string);

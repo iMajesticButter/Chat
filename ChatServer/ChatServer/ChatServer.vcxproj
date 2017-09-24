@@ -139,6 +139,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="adminCmd.cpp" />
     <ClCompile Include="CharRemoval.cpp" />
     <ClCompile Include="Commands.cpp" />
     <ClCompile Include="Funcs.cpp" />
@@ -148,6 +149,7 @@
     <ClCompile Include="Username.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="adminCmd.h" />
     <ClInclude Include="CharRemoval.h" />
     <ClInclude Include="Commands.h" />
     <ClInclude Include="main.h" />

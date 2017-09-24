@@ -2,7 +2,7 @@
 #include "CharRemoval.h"
 
 //process all incoming messages (relay to other clients, parse commands, etc...)
-void ProcessIncomingMSG(SOCKET sock, fd_set& set, SOCKET listening, std::string RoomName, RoomList& Rooms, Namelist* names, fd_set& master) {
+void ProcessIncomingMSG(SOCKET sock, fd_set& set, SOCKET listening, std::string RoomName, RoomList& Rooms, Namelist* names, fd_set& master, SOCKET& admin, std::list<SOCKET>& ops) {
 
 	//create a buffer to hold receved message
 	char buf[4096];
@@ -16,7 +16,7 @@ void ProcessIncomingMSG(SOCKET sock, fd_set& set, SOCKET listening, std::string 
 
 	if (bytesIn > 0) {
 		//parse the massage and run any commands entered sutch as /join, of /createroom etc...
-		Parsed = ParseAndCommands(sock, listening, set, buf, Rooms, RoomName, names, master);
+		Parsed = ParseAndCommands(sock, listening, set, buf, Rooms, RoomName, names, master, admin, ops);
 	}
 
 	//if the message was empty
@@ -25,6 +25,12 @@ void ProcessIncomingMSG(SOCKET sock, fd_set& set, SOCKET listening, std::string 
 		names->remove(&sock);
 		closesocket(sock);
 		FD_CLR(sock, &set);
+		if (set.fd_count != 0) {
+			SOCKET newAdmin = set.fd_array[0];
+			std::string msg = "You are now admin!";
+			send(newAdmin, msg.c_str(), msg.length(), 0);
+			admin = newAdmin;
+		}
 		return;
 	}
 	//if the message was not empty and no commands where found in 'ParseAndCommands'
@@ -55,8 +61,10 @@ void ProcessMaster(SOCKET sock, fd_set& set, SOCKET listening, RoomList& Rooms, 
 		//a simple struct to get data out of the 'ParseAndCommands' function
 		chatcmd::ParsedMSG Parsed;
 
+		std::list<SOCKET> ops;
+
 		//parse the massage and run any commands entered sutch as /join, of /createroom etc...
-		Parsed = ParseAndCommands(sock, listening, set, buf, Rooms, "Master", names, set);
+		Parsed = ParseAndCommands(sock, listening, set, buf, Rooms, "Master", names, set, sock, ops);
 		
 	}
 	//if the message was empty
@@ -87,7 +95,7 @@ void SendMSG(SOCKET sock, SOCKET listening, std::string str, fd_set set) {
 }
 
 //parse a massage and run any commands entered sutch as /join, of /createroom etc...
-chatcmd::ParsedMSG ParseAndCommands(SOCKET sock, SOCKET listening, fd_set& set, char buf[], RoomList& Rooms, std::string roomName, Namelist* names, fd_set& master) {
+chatcmd::ParsedMSG ParseAndCommands(SOCKET sock, SOCKET listening, fd_set& set, char buf[], RoomList& Rooms, std::string roomName, Namelist* names, fd_set& master, SOCKET& admin, std::list<SOCKET> ops) {
 
 	chatcmd::ParsedMSG toReturn = chatcmd::Parse(buf);
 
@@ -151,6 +159,24 @@ chatcmd::ParsedMSG ParseAndCommands(SOCKET sock, SOCKET listening, fd_set& set, 
 		toReturn.command = true;
 		return toReturn;
 	}
+
+	//admin/op commands
+
+	else if (roomName != "Master") {
+		if (aCmd::op(sock, toReturn, names, ops, admin)) {
+			toReturn.command = true;
+			return toReturn;
+		}
+		else if (aCmd::deop(sock, toReturn, names, ops, admin)) {
+			toReturn.command = true;
+			return toReturn;
+		}
+		else if (aCmd::admin(sock, toReturn, names, ops, admin)) {
+			toReturn.command = true;
+			return toReturn;
+		}
+	}
+
 	toReturn.command = false;
 	return toReturn;
 
